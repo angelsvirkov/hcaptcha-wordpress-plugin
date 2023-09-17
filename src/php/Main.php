@@ -197,15 +197,6 @@ class Main {
 	}
 
 	/**
-	 * Get Notifications instance.
-	 *
-	 * @return Notifications
-	 */
-	public function notifications(): Notifications {
-		return $this->notifications;
-	}
-
-	/**
 	 * Get Settings instance.
 	 *
 	 * @return Settings
