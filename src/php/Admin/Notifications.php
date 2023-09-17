@@ -30,6 +30,11 @@ class Notifications {
 	const DISMISS_NOTIFICATION_ACTION = 'hcaptcha-dismiss-notification';
 
 	/**
+	 * Reset notifications ajax action.
+	 */
+	const RESET_NOTIFICATIONS_ACTION = 'hcaptcha-reset-notifications';
+
+	/**
 	 * Dismissed user meta.
 	 */
 	const HCAPTCHA_DISMISSED_META_KEY = 'hcaptcha_dismissed';
@@ -42,18 +47,9 @@ class Notifications {
 	private $notifications = [];
 
 	/**
-	 * Prefix for minified files.
-	 *
-	 * @var string
-	 */
-	private $min_prefix;
-
-	/**
 	 * Init class.
 	 */
 	public function init() {
-		$this->min_prefix = defined( 'SCRIPT_DEBUG' ) && constant( 'SCRIPT_DEBUG' ) ? '' : '.min';
-
 		$this->init_notifications();
 		$this->init_hooks();
 	}
@@ -66,22 +62,24 @@ class Notifications {
 	private function init_hooks() {
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_scripts' ] );
 		add_action( 'wp_ajax_' . self::DISMISS_NOTIFICATION_ACTION, [ $this, 'dismiss_notification' ] );
+		add_action( 'wp_ajax_' . self::RESET_NOTIFICATIONS_ACTION, [ $this, 'reset_notifications' ] );
 	}
 
 	/**
 	 * Init notifications.
 	 *
 	 * @return void
+	 * @noinspection HtmlUnknownTarget
 	 */
 	private function init_notifications() {
 		$hcaptcha_url  = 'https://www.hcaptcha.com/?r=wp&utm_source=wordpress&utm_medium=wpplugin&utm_campaign=sk';
 		$register_url  = 'https://www.hcaptcha.com/signup-interstitial/?r=wp&utm_source=wordpress&utm_medium=wpplugin&utm_campaign=sk';
-		$pro_url       = 'https://www.hcaptcha.com/pro';
-		$dashboard_url = 'https://dashboard.hcaptcha.com/';
+		$pro_url       = 'https://www.hcaptcha.com/pro?r=wp&utm_source=wordpress&utm_medium=wpplugin&utm_campaign=not';
+		$dashboard_url = 'https://dashboard.hcaptcha.com/?r=wp&utm_source=wordpress&utm_medium=wpplugin&utm_campaign=not';
 
 		$this->notifications = [
 			'register'       => [
-				'title'   => __( 'Register hCaptcha', 'hcaptcha-for-forms-and-more' ),
+				'title'   => __( 'Get your hCaptcha site keys', 'hcaptcha-for-forms-and-more' ),
 				'message' => sprintf(
 				/* translators: 1: hCaptcha link, 2: register link. */
 					__( 'To use %1$s, please register %2$s to get your site and secret keys.', 'hcaptcha-for-forms-and-more' ),
@@ -98,7 +96,7 @@ class Notifications {
 				),
 				'button'  => [
 					'url'  => $register_url,
-					'text' => __( 'Register', 'hcaptcha-for-forms-and-more' ),
+					'text' => __( 'Get site keys', 'hcaptcha-for-forms-and-more' ),
 				],
 			],
 			'pro-free-trial' => [
@@ -145,10 +143,10 @@ class Notifications {
 		}
 
 		?>
-		<h3 id="hcaptcha-section-notifications">
-			<?php esc_html_e( 'Notifications', 'hcaptcha-for-forms-and-more' ); ?>
-		</h3>
 		<div id="hcaptcha-notifications">
+			<div id="hcaptcha-notifications-header">
+				<?php esc_html_e( 'Notifications', 'hcaptcha-for-forms-and-more' ); ?>
+			</div>
 			<?php
 
 			foreach ( $notifications as $id => $notification ) {
@@ -205,9 +203,11 @@ class Notifications {
 	 * Enqueue class scripts.
 	 */
 	public function admin_enqueue_scripts() {
+		$min = hcap_min_suffix();
+
 		wp_enqueue_script(
 			self::HANDLE,
-			constant( 'HCAPTCHA_URL' ) . "/assets/js/notifications$this->min_prefix.js",
+			constant( 'HCAPTCHA_URL' ) . "/assets/js/notifications$min.js",
 			[ 'jquery' ],
 			constant( 'HCAPTCHA_VERSION' ),
 			true
@@ -219,13 +219,15 @@ class Notifications {
 			[
 				'ajaxUrl'                   => admin_url( 'admin-ajax.php' ),
 				'dismissNotificationAction' => self::DISMISS_NOTIFICATION_ACTION,
-				'nonce'                     => wp_create_nonce( self::DISMISS_NOTIFICATION_ACTION ),
+				'dismissNotificationNonce'  => wp_create_nonce( self::DISMISS_NOTIFICATION_ACTION ),
+				'resetNotificationAction'   => self::RESET_NOTIFICATIONS_ACTION,
+				'resetNotificationNonce'    => wp_create_nonce( self::RESET_NOTIFICATIONS_ACTION ),
 			]
 		);
 
 		wp_enqueue_style(
 			self::HANDLE,
-			constant( 'HCAPTCHA_URL' ) . "/assets/css/notifications$this->min_prefix.css",
+			constant( 'HCAPTCHA_URL' ) . "/assets/css/notifications$min.css",
 			[],
 			constant( 'HCAPTCHA_VERSION' )
 		);
@@ -274,8 +276,7 @@ class Notifications {
 			return false;
 		}
 
-		$dismissed = get_user_meta( $user->ID, self::HCAPTCHA_DISMISSED_META_KEY, true );
-		$dismissed = $dismissed ?: [];
+		$dismissed = get_user_meta( $user->ID, self::HCAPTCHA_DISMISSED_META_KEY, true ) ?: [];
 
 		if ( in_array( $id, $dismissed, true ) ) {
 			return false;
@@ -290,5 +291,46 @@ class Notifications {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Ajax action to reset notifications.
+	 *
+	 * @return void
+	 */
+	public function reset_notifications() {
+		// Run a security check.
+		if ( ! check_ajax_referer( self::RESET_NOTIFICATIONS_ACTION, 'nonce', false ) ) {
+			wp_send_json_error( esc_html__( 'Your session has expired. Please reload the page.', 'hcaptcha-for-forms-and-more' ) );
+		}
+
+		// Check for permissions.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( esc_html__( 'You are not allowed to perform this action.', 'hcaptcha-for-forms-and-more' ) );
+		}
+
+		if ( ! $this->remove_dismissed() ) {
+			wp_send_json_error();
+		}
+
+		ob_start();
+		$this->show();
+
+		wp_send_json_success( wp_kses_post( ob_get_clean() ) );
+	}
+
+	/**
+	 * Remove dismissed status for all notifications.
+	 *
+	 * @return bool
+	 */
+	private function remove_dismissed(): bool {
+		$user = wp_get_current_user();
+
+		if ( ! $user ) {
+			return false;
+		}
+
+		return delete_user_meta( $user->ID, self::HCAPTCHA_DISMISSED_META_KEY );
 	}
 }

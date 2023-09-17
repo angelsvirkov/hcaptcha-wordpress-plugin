@@ -62,9 +62,7 @@ class CF7 {
 		$form_id = isset( $attr['id'] ) ? (int) $attr['id'] : 0;
 
 		if ( has_shortcode( $output, self::SHORTCODE ) ) {
-			$output = $this->add_form_id_to_cf7_hcap_shortcode( $output, $form_id );
-
-			$output = do_shortcode( $output );
+			$output = do_shortcode( $this->add_form_id_to_cf7_hcap_shortcode( $output, $form_id ) );
 
 			add_filter( 'do_shortcode_tag', [ $this, 'wpcf7_shortcode' ], 20, 4 );
 
@@ -129,13 +127,6 @@ class CF7 {
 			$id['source']  = isset( $id['source'] ) ? (array) $id['source'] : [];
 			$id['form_id'] = $id['form_id'] ?? 0;
 
-			/**
-			 * Filters the protection status of a form.
-			 *
-			 * @param string     $value   The protection status of a form.
-			 * @param string[]   $source  The source of the form (plugin, theme, WordPress Core).
-			 * @param int|string $form_id Form id.
-			 */
 			if (
 				! $args['protect'] ||
 				! apply_filters( 'hcap_protect_form', true, $id['source'], $id['form_id'] )

@@ -84,9 +84,6 @@ class AMainTest extends HCaptchaWPTestCase {
 		wp_dequeue_script( 'hcaptcha' );
 		wp_deregister_script( 'hcaptcha' );
 
-		wp_dequeue_script( 'hcaptcha-elementor-pro-frontend' );
-		wp_deregister_script( 'hcaptcha-elementor-pro-frontend' );
-
 		wp_dequeue_script( 'jquery' );
 		wp_deregister_script( 'jquery' );
 
@@ -127,7 +124,7 @@ class AMainTest extends HCaptchaWPTestCase {
 	 * Test init() and init_hooks().
 	 *
 	 * @param boolean        $logged_in                   User is logged in.
-	 * @param boolean        $hcaptcha_off_when_logged_in Option 'hcaptcha_off_when_logged_in' is set.
+	 * @param string         $hcaptcha_off_when_logged_in Option 'hcaptcha_off_when_logged_in' is set.
 	 * @param boolean|string $whitelisted                 Whether IP is whitelisted.
 	 * @param boolean        $hcaptcha_active             Plugin should be active.
 	 *
@@ -135,7 +132,7 @@ class AMainTest extends HCaptchaWPTestCase {
 	 * @noinspection PhpUnitTestsInspection
 	 * @throws ReflectionException ReflectionException.
 	 */
-	public function test_init_and_init_hooks( $logged_in, $hcaptcha_off_when_logged_in, $whitelisted, $hcaptcha_active ) {
+	public function test_init_and_init_hooks( bool $logged_in, string $hcaptcha_off_when_logged_in, $whitelisted, bool $hcaptcha_active ) {
 		global $current_user;
 
 		$hcaptcha_wordpress_plugin = hcaptcha();
@@ -144,8 +141,7 @@ class AMainTest extends HCaptchaWPTestCase {
 			'hcap_whitelist_ip',
 			static function () use ( $whitelisted ) {
 				return $whitelisted;
-			},
-			10
+			}
 		);
 
 		// Plugin was loaded by codeception.
@@ -271,7 +267,7 @@ class AMainTest extends HCaptchaWPTestCase {
 	 *
 	 * @return array[]
 	 */
-	public function dp_test_init() {
+	public function dp_test_init(): array {
 		return [
 			'not logged in, not set, not whitelisted' => [ false, 'off', false, true ],
 			'not logged in, set, not whitelisted'     => [ false, 'on', false, true ],
@@ -287,7 +283,7 @@ class AMainTest extends HCaptchaWPTestCase {
 	/**
 	 * Test init() and init_hooks() on Elementor Pro edit page.
 	 *
-	 * @param boolean $elementor_pro_status Option 'elementor_pro_status' is set.
+	 * @param string  $elementor_pro_status Option 'elementor_pro_status' is set.
 	 * @param array   $server               $_SERVER variable.
 	 * @param array   $get                  $_GET variable.
 	 * @param array   $post                 $_POST variable.
@@ -298,7 +294,11 @@ class AMainTest extends HCaptchaWPTestCase {
 	 * @throws ReflectionException ReflectionException.
 	 */
 	public function test_init_and_init_hooks_on_elementor_pro_edit_page(
-		$elementor_pro_status, $server, $get, $post, $hcaptcha_active
+		string $elementor_pro_status,
+		array $server,
+		array $get,
+		array $post,
+		bool $hcaptcha_active
 	) {
 		global $current_user;
 
@@ -306,8 +306,7 @@ class AMainTest extends HCaptchaWPTestCase {
 			'hcap_whitelist_ip',
 			static function () {
 				return true;
-			},
-			10
+			}
 		);
 
 		unset( $current_user );
@@ -392,7 +391,7 @@ class AMainTest extends HCaptchaWPTestCase {
 	 *
 	 * @return array
 	 */
-	public function dp_test_init_and_init_hooks_on_elementor_pro_edit_page() {
+	public function dp_test_init_and_init_hooks_on_elementor_pro_edit_page(): array {
 		return [
 			'elementor option off' => [
 				'off',
@@ -494,9 +493,11 @@ class AMainTest extends HCaptchaWPTestCase {
 	 * Test print_inline_styles().
 	 */
 	public function test_print_inline_styles() {
-		$url = HCAPTCHA_URL . '/assets/images/hcaptcha-div-logo.svg';
+		$div_logo_url       = HCAPTCHA_URL . '/assets/images/hcaptcha-div-logo.svg';
+		$div_logo_url_white = HCAPTCHA_URL . '/assets/images/hcaptcha-div-logo-white.svg';
 
-		$expected = '		<style>
+		$expected = '		<!--suppress CssUnresolvedCustomProperty, CssUnusedSymbol -->
+		<style>
 			#wpdiscuz-subscribe-form .h-captcha {
 				margin-left: auto;
 			}
@@ -525,8 +526,12 @@ class AMainTest extends HCaptchaWPTestCase {
 			form.wpsc-create-ticket .h-captcha {
 				margin: 0 15px 15px 15px;
 			}
-			.gform_previous_button + .h-captcha {
-				margin-top: 2rem;
+			.frm-fluent-form .h-captcha {
+				line-height: 0;
+				margin-bottom: 0;
+			}
+			.passster-form .h-captcha {
+				margin-bottom: 5px;
 			}
 			#wpforo #wpforo-wrap.wpft-topic div .h-captcha,
 			#wpforo #wpforo-wrap.wpft-forum div .h-captcha {
@@ -559,25 +564,27 @@ class AMainTest extends HCaptchaWPTestCase {
 				position: absolute;
 				top: 0;
 				left: 0;
-				background: url(' . $url . ') no-repeat;
+				background: url(' . $div_logo_url . ') no-repeat;
 				border: 1px solid transparent;
 				border-radius: 4px;
 			}
 			.h-captcha[data-size="normal"]::before {
 				width: 300px;
 				height: 74px;
-				background-position: 94% 27%;
+				background-position: 94% 28%;
 			}
 			.h-captcha[data-size="compact"]::before {
 				width: 156px;
 				height: 136px;
-				background-position: 50% 77%;
+				background-position: 50% 79%;
 			}
 			.h-captcha[data-theme="light"]::before {
 				background-color: #fafafa;
 				border: 1px solid #e0e0e0;
 			}
 			.h-captcha[data-theme="dark"]::before {
+				background-image: url(' . $div_logo_url_white . ');
+				background-repeat: no-repeat;
 				background-color: #333;
 				border: 1px solid #f5f5f5;
 			}
@@ -647,32 +654,6 @@ class AMainTest extends HCaptchaWPTestCase {
 	}
 
 	/**
-	 * Test hcap_language filter in get_api_src().
-	 *
-	 * @return void
-	 * @noinspection PhpUnusedParameterInspection
-	 */
-	public function test_hcap_language_filter_in_get_api_scr() {
-		$language          = 'en';
-		$filtered_language = 'de';
-		$expected          = 'https://js.hcaptcha.com/1/api.js?onload=hCaptchaOnLoad&render=explicit&hl=' . $filtered_language;
-
-		update_option( 'hcaptcha_settings', [ 'language' => $language ] );
-
-		add_filter(
-			'hcap_language',
-			static function ( $language ) use ( $filtered_language ) {
-				return $filtered_language;
-			}
-		);
-
-		$subject = new Main();
-		$subject->init_hooks();
-
-		self::assertSame( $expected, $subject->get_api_src() );
-	}
-
-	/**
 	 * Test print_footer_scripts().
 	 *
 	 * @param string|false $compat              Compat option value.
@@ -684,7 +665,7 @@ class AMainTest extends HCaptchaWPTestCase {
 	 * @throws ReflectionException ReflectionException.
 	 * @noinspection BadExpressionStatementJS
 	 */
-	public function test_print_footer_scripts( $compat, $language, $custom_themes, $expected_script_src ) {
+	public function test_print_footer_scripts( $compat, $language, $custom_themes, string $expected_script_src ) {
 		$hcaptcha_wordpress_plugin = hcaptcha();
 
 		$hcaptcha_wordpress_plugin->form_shown = true;
@@ -746,20 +727,36 @@ class AMainTest extends HCaptchaWPTestCase {
 			} )();
 		</script>';
 
-		$config_params  = 'on' === $custom_themes ? '' : null;
+		$site_key       = 'some key';
+		$theme          = 'light';
+		$size           = 'normal';
+		$language       = $language ?: '';
+		$params         = [
+			'sitekey' => $site_key,
+			'theme'   => $theme,
+			'size'    => $size,
+			'hl'      => $language,
+		];
+		$config_params  = 'on' === $custom_themes ? [ 'theme' => [ 'some theme' ] ] : [];
+		$params         = array_merge( $params, $config_params );
 		$expected_extra = [
 			'group' => 1,
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
-			'data'  => 'var HCaptchaMainObject = {"params":' . json_encode( $config_params ) . '};',
+			'data'  => 'var HCaptchaMainObject = {"params":"' . addslashes( json_encode( $params ) ) . '"};',
 		];
 
 		update_option(
 			'hcaptcha_settings',
 			[
 				'recaptcha_compat_off' => $compat ? [ $compat ] : [],
-				'language'             => $language ?: '',
+				'language'             => $language,
+				'site_key'             => $site_key,
+				'mode'                 => 'live',
+				'theme'                => $theme,
+				'size'                 => $size,
 				'custom_themes'        => $custom_themes ? [ $custom_themes ] : [],
-				'config_params'        => $config_params,
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
+				'config_params'        => json_encode( $config_params ),
 				'delay'                => - 100,
 			]
 		);
@@ -768,7 +765,6 @@ class AMainTest extends HCaptchaWPTestCase {
 
 		// Test when Elementor Pro is not loaded.
 		self::assertFalse( wp_script_is( 'hcaptcha' ) );
-		self::assertFalse( wp_script_is( 'hcaptcha-elementor-pro-frontend' ) );
 
 		ob_start();
 		do_action( 'wp_print_footer_scripts' );
@@ -782,16 +778,11 @@ class AMainTest extends HCaptchaWPTestCase {
 		self::assertSame( HCAPTCHA_VERSION, $hcaptcha->ver );
 		self::assertSame( $expected_extra, $hcaptcha->extra );
 
-		self::assertFalse( wp_script_is( 'hcaptcha-elementor-pro-frontend' ) );
-
 		self::assertNotFalse( strpos( $scripts, $expected_scripts ) );
 
 		// Test when Elementor Pro is loaded.
 		wp_dequeue_script( 'hcaptcha' );
 		wp_deregister_script( 'hcaptcha' );
-
-		wp_dequeue_script( 'hcaptcha-elementor-pro-frontend' );
-		wp_deregister_script( 'hcaptcha-elementor-pro-frontend' );
 
 		wp_dequeue_script( 'jquery' );
 		wp_deregister_script( 'jquery' );
@@ -803,7 +794,6 @@ class AMainTest extends HCaptchaWPTestCase {
 		$this->set_protected_property( $hcaptcha_wordpress_plugin, 'loaded_classes', $loaded_classes );
 
 		self::assertFalse( wp_script_is( 'hcaptcha' ) );
-		self::assertFalse( wp_script_is( 'hcaptcha-elementor-pro-frontend' ) );
 
 		ob_start();
 		do_action( 'wp_print_footer_scripts' );
@@ -817,14 +807,6 @@ class AMainTest extends HCaptchaWPTestCase {
 		self::assertSame( HCAPTCHA_VERSION, $hcaptcha->ver );
 		self::assertSame( $expected_extra, $hcaptcha->extra );
 
-		self::assertTrue( wp_script_is( 'hcaptcha-elementor-pro-frontend' ) );
-
-		$hcaptcha_elementor_pro_frontend = wp_scripts()->registered['hcaptcha-elementor-pro-frontend'];
-		self::assertSame( HCAPTCHA_URL . '/assets/js/hcaptcha-elementor-pro-frontend.min.js', $hcaptcha_elementor_pro_frontend->src );
-		self::assertSame( [ 'jquery', 'hcaptcha' ], $hcaptcha_elementor_pro_frontend->deps );
-		self::assertSame( HCAPTCHA_VERSION, $hcaptcha_elementor_pro_frontend->ver );
-		self::assertSame( [ 'group' => 1 ], $hcaptcha_elementor_pro_frontend->extra );
-
 		self::assertNotFalse( strpos( $scripts, $expected_scripts ) );
 	}
 
@@ -833,7 +815,7 @@ class AMainTest extends HCaptchaWPTestCase {
 	 *
 	 * @return array
 	 */
-	public function dp_test_print_footer_scripts() {
+	public function dp_test_print_footer_scripts(): array {
 		return [
 			'no options'         => [
 				false,
@@ -857,7 +839,7 @@ class AMainTest extends HCaptchaWPTestCase {
 				false,
 				'ru',
 				false,
-				'https://js.hcaptcha.com/1/api.js?onload=hCaptchaOnLoad&render=explicit&hl=ru',
+				'https://js.hcaptcha.com/1/api.js?onload=hCaptchaOnLoad&render=explicit',
 			],
 			'custom themes only' => [
 				false,
@@ -869,7 +851,7 @@ class AMainTest extends HCaptchaWPTestCase {
 				'on',
 				'ru',
 				'on',
-				'https://js.hcaptcha.com/1/api.js?onload=hCaptchaOnLoad&render=explicit&recaptchacompat=off&custom=true&hl=ru',
+				'https://js.hcaptcha.com/1/api.js?onload=hCaptchaOnLoad&render=explicit&recaptchacompat=off&custom=true',
 			],
 		];
 	}
@@ -898,7 +880,7 @@ class AMainTest extends HCaptchaWPTestCase {
 	 * @dataProvider dp_test_load_modules
 	 * @throws ReflectionException ReflectionException.
 	 */
-	public function test_load_modules( $module ) {
+	public function test_load_modules( array $module ) {
 		list( $option_name, $option_value ) = $module[0];
 
 		update_option(
@@ -925,6 +907,7 @@ class AMainTest extends HCaptchaWPTestCase {
 		}
 
 		$component = (array) $module[2];
+		$component = isset( $module[3] ) ? (array) $module[3] : $component;
 
 		$expected_loaded_classes = [];
 		self::assertSame(
@@ -1002,7 +985,9 @@ class AMainTest extends HCaptchaWPTestCase {
 	 *
 	 * @return array
 	 */
-	public function dp_test_load_modules() {
+	public function dp_test_load_modules(): array {
+		// Return modules similar to defined in Main class.
+		// If $module[3] is set, it contains expected value.
 		$modules = [
 			'Comment Form'                      => [
 				[ 'wp_status', 'comment' ],
@@ -1113,6 +1098,7 @@ class AMainTest extends HCaptchaWPTestCase {
 				[ 'divi_status', 'comment' ],
 				'Divi',
 				[ \HCaptcha\Divi\Comment::class, Comment::class ],
+				[ \HCaptcha\Divi\Comment::class, \HCaptcha\Divi\Login::class ],
 			],
 			'Divi Contact Form'                 => [
 				[ 'divi_status', 'contact' ],
@@ -1197,7 +1183,7 @@ class AMainTest extends HCaptchaWPTestCase {
 			'Paid Memberships Pro Checkout'     => [
 				[ 'paid_memberships_pro_status', 'checkout' ],
 				'paid-memberships-pro/paid-memberships-pro.php',
-				\HCaptcha\PaidMembershipsPro\Checkout::class,
+				[ \HCaptcha\PaidMembershipsPro\Checkout::class, \HCaptcha\PaidMembershipsPro\Login::class ],
 			],
 			'Paid Memberships Pro Login'        => [
 				[ 'paid_memberships_pro_status', 'login' ],
@@ -1233,6 +1219,16 @@ class AMainTest extends HCaptchaWPTestCase {
 				[ 'supportcandy_status', 'form' ],
 				'supportcandy/supportcandy.php',
 				\HCaptcha\SupportCandy\Form::class,
+			],
+			'Theme My Login Login'              => [
+				[ 'theme_my_login_status', 'login' ],
+				'theme-my-login/theme-my-login.php',
+				\HCaptcha\ThemeMyLogin\Login::class,
+			],
+			'Theme My Login Register'           => [
+				[ 'theme_my_login_status', 'register' ],
+				'theme-my-login/theme-my-login.php',
+				\HCaptcha\ThemeMyLogin\Register::class,
 			],
 			'Ultimate Member Login'             => [
 				[ 'ultimate_member_status', 'login' ],

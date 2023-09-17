@@ -42,7 +42,7 @@ class NFTest extends HCaptchaPluginWPTestCase {
 			10,
 			has_filter( 'ninja_forms_localize_field_hcaptcha-for-ninja-forms', [ $subject, 'localize_field' ] )
 		);
-		self::assertSame( 10, has_action( 'wp_enqueue_scripts', [ $subject, 'nf_captcha_script' ] ) );
+		self::assertSame( 9, has_action( 'wp_print_footer_scripts', [ $subject, 'nf_captcha_script' ] ) );
 	}
 
 	/**
@@ -51,9 +51,7 @@ class NFTest extends HCaptchaPluginWPTestCase {
 	public function test_register_fields() {
 		$fields = [ 'some field' ];
 
-		$subject = new NF();
-
-		$fields = $subject->register_fields( $fields );
+		$fields = ( new NF() )->register_fields( $fields );
 
 		self::assertInstanceOf( Fields::class, $fields['hcaptcha-for-ninja-forms'] );
 	}
@@ -65,9 +63,7 @@ class NFTest extends HCaptchaPluginWPTestCase {
 		$paths    = [ 'some path' ];
 		$expected = array_merge( $paths, [ str_replace( '\\', '/', HCAPTCHA_PATH . '/src/php/NF/templates/' ) ] );
 
-		$subject = new NF();
-
-		$paths = $subject->template_file_paths( $paths );
+		$paths = ( new NF() )->template_file_paths( $paths );
 		array_walk(
 			$paths,
 			static function ( &$item ) {
@@ -121,7 +117,7 @@ class NFTest extends HCaptchaPluginWPTestCase {
 			data-sitekey="some key"
 			data-theme="some theme"
 			data-size="some size"
-						data-auto="false">
+			data-auto="false">
 		</div>
 		';
 
@@ -161,6 +157,6 @@ class NFTest extends HCaptchaPluginWPTestCase {
 
 		$subject->nf_captcha_script();
 
-		self::assertTrue( wp_script_is( 'hcaptcha-nf', 'enqueued' ) );
+		self::assertTrue( wp_script_is( 'hcaptcha-nf' ) );
 	}
 }

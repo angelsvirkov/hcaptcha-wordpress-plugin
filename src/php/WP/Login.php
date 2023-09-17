@@ -24,16 +24,6 @@ use WP_User;
 class Login extends LoginBase {
 
 	/**
-	 * Nonce action.
-	 */
-	const ACTION = 'hcaptcha_login';
-
-	/**
-	 * Nonce name.
-	 */
-	const NONCE = 'hcaptcha_login_nonce';
-
-	/**
 	 * Init hooks.
 	 */
 	protected function init_hooks() {
@@ -41,13 +31,6 @@ class Login extends LoginBase {
 
 		add_action( 'login_form', [ $this, 'add_captcha' ] );
 		add_filter( 'wp_authenticate_user', [ $this, 'verify' ], 10, 2 );
-
-		if ( ! class_exists( Controller_WordfenceLS::class ) ) {
-			return;
-		}
-
-		add_action( 'login_enqueue_scripts', [ $this, 'remove_wordfence_scripts' ], 0 );
-		add_filter( 'wordfence_ls_require_captcha', [ $this, 'wordfence_ls_require_captcha' ] );
 	}
 
 	/**
@@ -56,20 +39,11 @@ class Login extends LoginBase {
 	 * @return void
 	 */
 	public function add_captcha() {
-		if ( ! $this->is_login_limit_exceeded() ) {
+		if ( ! $this->is_wp_login_form() ) {
 			return;
 		}
 
-		$args = [
-			'action' => self::ACTION,
-			'name'   => self::NONCE,
-			'id'     => [
-				'source'  => HCaptcha::get_class_source( __CLASS__ ),
-				'form_id' => 'login',
-			],
-		];
-
-		HCaptcha::form_display( $args );
+		parent::add_captcha();
 	}
 
 	/**
@@ -83,7 +57,13 @@ class Login extends LoginBase {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function verify( $user, string $password ) {
-		if ( false === strpos( wp_get_raw_referer(), '/wp-login.php' ) ) {
+		if (
+			! (
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				isset( $_POST['log'], $_POST['pwd'] ) &&
+				$this->is_wp_login_form()
+			)
+		) {
 			return $user;
 		}
 
@@ -104,23 +84,15 @@ class Login extends LoginBase {
 	}
 
 	/**
-	 * Remove Wordfence login scripts.
+	 * Whether we process the native WP login form created in wp-login.php.
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	public function remove_wordfence_scripts() {
-		$controller_wordfence_ls = Controller_WordfenceLS::shared();
-
-		remove_action( 'login_enqueue_scripts', [ $controller_wordfence_ls, '_login_enqueue_scripts' ] );
-	}
-
-	/**
-	 * Do not require Wordfence captcha.
-	 *
-	 * @return false
-	 */
-	public function wordfence_ls_require_captcha(): bool {
-
-		return false;
+	private function is_wp_login_form(): bool {
+		return (
+			did_action( 'login_init' ) &&
+			did_action( 'login_form_login' ) &&
+			HCaptcha::did_filter( 'login_link_separator' )
+		);
 	}
 }

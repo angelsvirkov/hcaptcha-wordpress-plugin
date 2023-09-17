@@ -145,6 +145,12 @@ class General extends PluginSettingsBase {
 				'text'    => __( 'Check', 'hcaptcha-for-forms-and-more' ),
 				'section' => self::SECTION_KEYS,
 			],
+			'reset_notifications'  => [
+				'label'   => __( 'Reset Notifications', 'hcaptcha-for-forms-and-more' ),
+				'type'    => 'button',
+				'text'    => __( 'Reset', 'hcaptcha-for-forms-and-more' ),
+				'section' => self::SECTION_KEYS,
+			],
 			'theme'                => [
 				'label'   => __( 'Theme', 'hcaptcha-for-forms-and-more' ),
 				'type'    => 'select',
@@ -410,7 +416,8 @@ class General extends PluginSettingsBase {
 			return;
 		}
 
-		$mode = $this->get( 'mode' );
+		// In Settings, a filter applied for mode.
+		$mode = hcaptcha()->settings()->get_mode();
 
 		if ( self::MODE_LIVE !== $mode ) {
 			$this->form_fields['site_key']['disabled']   = true;
@@ -488,7 +495,7 @@ class General extends PluginSettingsBase {
 				'modeTestPublisher'                    => self::MODE_TEST_PUBLISHER,
 				'modeTestEnterpriseSafeEndUser'        => self::MODE_TEST_ENTERPRISE_SAFE_END_USER,
 				'modeTestEnterpriseBotDetected'        => self::MODE_TEST_ENTERPRISE_BOT_DETECTED,
-				'siteKey'                              => hcaptcha()->settings()->get_site_key(),
+				'siteKey'                              => hcaptcha()->settings()->get( 'site_key' ),
 				'modeTestPublisherSiteKey'             => self::MODE_TEST_PUBLISHER_SITE_KEY,
 				'modeTestEnterpriseSafeEndUserSiteKey' => self::MODE_TEST_ENTERPRISE_SAFE_END_USER_SITE_KEY,
 				'modeTestEnterpriseBotDetectedSiteKey' => self::MODE_TEST_ENTERPRISE_BOT_DETECTED_SITE_KEY,
@@ -541,6 +548,7 @@ class General extends PluginSettingsBase {
 	 * Ajax action to check config.
 	 *
 	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function check_config() {
 		// Run a security check.
@@ -553,17 +561,38 @@ class General extends PluginSettingsBase {
 			wp_send_json_error( esc_html__( 'You are not allowed to perform this action.', 'hcaptcha-for-forms-and-more' ) );
 		}
 
-		$settings = hcaptcha()->settings();
+		$ajax_mode       = isset( $_POST['mode'] ) ? sanitize_text_field( wp_unslash( $_POST['mode'] ) ) : '';
+		$ajax_site_key   = isset( $_POST['siteKey'] ) ? sanitize_text_field( wp_unslash( $_POST['siteKey'] ) ) : '';
+		$ajax_secret_key = isset( $_POST['secretKey'] ) ? sanitize_text_field( wp_unslash( $_POST['secretKey'] ) ) : '';
 
-		$params = [
+		add_filter(
+			'hcap_mode',
+			static function ( $mode ) use ( $ajax_mode ) {
+				return $ajax_mode;
+			}
+		);
+		add_filter(
+			'hcap_site_key',
+			static function ( $site_key ) use ( $ajax_site_key ) {
+				return $ajax_site_key;
+			}
+		);
+		add_filter(
+			'hcap_secret_key',
+			static function ( $secret_key ) use ( $ajax_secret_key ) {
+				return $ajax_secret_key;
+			}
+		);
+
+		$settings = hcaptcha()->settings();
+		$params   = [
 			'host'    => (string) wp_parse_url( site_url(), PHP_URL_HOST ),
 			'sitekey' => $settings->get_site_key(),
 			'sc'      => 1,
 			'swa'     => 1,
 			'spst'    => 0,
 		];
-
-		$url = add_query_arg( $params, 'https://hcaptcha.com/checksiteconfig' );
+		$url      = add_query_arg( $params, 'https://hcaptcha.com/checksiteconfig' );
 
 		$raw_response = wp_remote_post( $url );
 
@@ -575,7 +604,11 @@ class General extends PluginSettingsBase {
 
 		$body = json_decode( $raw_body, true );
 
-		if ( ! isset( $body['pass'] ) || ! $body['pass'] ) {
+		if ( ! $body ) {
+			wp_send_json_error( $raw_body );
+		}
+
+		if ( empty( $body['pass'] ) ) {
 			$error = $body['error'] ? (string) $body['error'] : '';
 			$error = $error ? ': ' . $error : '';
 

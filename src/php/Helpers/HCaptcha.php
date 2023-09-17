@@ -34,7 +34,7 @@ class HCaptcha {
 		ob_start();
 		self::form_display( $args );
 
-		return ob_get_clean();
+		return (string) ob_get_clean();
 	}
 
 	/**
@@ -76,7 +76,7 @@ class HCaptcha {
 			/**
 			 * Filters the protection status of a form.
 			 *
-			 * @param string     $value   The protection status of a form.
+			 * @param bool       $value   The protection status of a form.
 			 * @param string[]   $source  The source of the form (plugin, theme, WordPress Core).
 			 * @param int|string $form_id Form id.
 			 */
@@ -103,7 +103,6 @@ class HCaptcha {
 
 		$args['auto'] = filter_var( $args['auto'], FILTER_VALIDATE_BOOLEAN );
 		$args['size'] = in_array( $args['size'], $allowed_sizes, true ) ? $args['size'] : $hcaptcha_size;
-		$callback     = 'invisible' === $args['size'] ? 'data-callback="hCaptchaSubmit"' : '';
 
 		?>
 		<div
@@ -111,7 +110,6 @@ class HCaptcha {
 			data-sitekey="<?php echo esc_attr( $hcaptcha_site_key ); ?>"
 			data-theme="<?php echo esc_attr( $hcaptcha_theme ); ?>"
 			data-size="<?php echo esc_attr( $args['size'] ); ?>"
-			<?php echo wp_kses_post( $callback ); ?>
 			data-auto="<?php echo $args['auto'] ? 'true' : 'false'; ?>">
 		</div>
 		<?php
@@ -188,13 +186,13 @@ class HCaptcha {
 	/**
 	 * Get source which class serves.
 	 *
-	 * @param string $class Class name.
+	 * @param string $class_name Class name.
 	 *
 	 * @return array
 	 */
-	public static function get_class_source( string $class ): array {
+	public static function get_class_source( string $class_name ): array {
 		foreach ( hcaptcha()->modules as $module ) {
-			if ( in_array( $class, (array) $module[2], true ) ) {
+			if ( in_array( $class_name, (array) $module[2], true ) ) {
 				$source = $module[1];
 
 				// For WP Core (empty $source string), return option value.
@@ -203,5 +201,44 @@ class HCaptcha {
 		}
 
 		return [];
+	}
+
+	/**
+	 * Get hCaptcha plugin notice.
+	 *
+	 * @return string[]
+	 * @noinspection HtmlUnknownTarget
+	 */
+	public static function get_hcaptcha_plugin_notice(): array {
+		$url                   = admin_url( 'options-general.php?page=hcaptcha&tab=general' );
+		$notice['label']       = esc_html__( 'hCaptcha plugin is active', 'hcaptcha-for-forms-and-more' );
+		$notice['description'] = wp_kses_post(
+			sprintf(
+			/* translators: 1: link to the General setting page */
+				__( 'When hCaptcha plugin is active and integration is on, hCaptcha settings must be modified on the %1$s.', 'hcaptcha-for-forms-and-more' ),
+				sprintf(
+					'<a href="%s" target="_blank">General settings page</a>',
+					esc_url( $url )
+				)
+			)
+		);
+
+		return $notice;
+	}
+
+	/**
+	 * Retrieves the number of times a filter has been applied during the current request.
+	 *
+	 * Introduced in WP 6.1.0.
+	 *
+	 * @global int[] $wp_filters Stores the number of times each filter was triggered.
+	 *
+	 * @param string $hook_name The name of the filter hook.
+	 * @return int The number of times the filter hook has been applied.
+	 */
+	public static function did_filter( string $hook_name ): int {
+		global $wp_filters;
+
+		return $wp_filters[ $hook_name ] ?? 0;
 	}
 }

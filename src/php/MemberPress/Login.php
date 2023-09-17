@@ -37,28 +37,6 @@ class Login extends LoginBase {
 	}
 
 	/**
-	 * Add hCaptcha to the Register form.
-	 *
-	 * @return void
-	 */
-	public function add_captcha() {
-		if ( ! $this->is_login_limit_exceeded() ) {
-			return;
-		}
-
-		$args = [
-			'action' => self::ACTION,
-			'name'   => self::NONCE,
-			'id'     => [
-				'source'  => HCaptcha::get_class_source( __CLASS__ ),
-				'form_id' => 'login',
-			],
-		];
-
-		HCaptcha::form_display( $args );
-	}
-
-	/**
 	 * Verify login form.
 	 *
 	 * @since        1.0
@@ -71,6 +49,10 @@ class Login extends LoginBase {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function verify( $user, string $password ) {
+		if ( ! HCaptcha::did_filter( 'mepr-validate-login' ) ) {
+			return $user;
+		}
+
 		if ( ! $this->is_login_limit_exceeded() ) {
 			return $user;
 		}

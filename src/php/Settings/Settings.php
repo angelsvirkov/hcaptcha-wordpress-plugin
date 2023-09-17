@@ -5,6 +5,9 @@
  * @package hcaptcha-wp
  */
 
+// phpcs:ignore Generic.Commenting.DocComment.MissingShort
+/** @noinspection ContractViolationInspection */
+
 namespace HCaptcha\Settings;
 
 use HCaptcha\Settings\Abstracts\SettingsBase;
@@ -128,6 +131,29 @@ class Settings implements SettingsInterface {
 	}
 
 	/**
+	 * Set plugin option.
+	 *
+	 * @param string $key   Setting name.
+	 * @param mixed  $value Value for this setting.
+	 *
+	 * @return bool
+	 */
+	public function set( string $key, $value ): bool {
+		foreach ( $this->tabs as $tab ) {
+			/**
+			 * Page / Tab.
+			 *
+			 * @var SettingsBase $tab
+			 */
+			if ( $tab->set( $key, $value ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Check whether option value equals to the compared.
 	 *
 	 * @param string $key     Setting name.
@@ -162,11 +188,10 @@ class Settings implements SettingsInterface {
 	 * @return array
 	 */
 	private function get_keys(): array {
-		$mode = $this->get( 'mode' );
 
 		// String concat is used for the PHP 5.6 compatibility.
 		// phpcs:disable Generic.Strings.UnnecessaryStringConcat.Found
-		switch ( $mode ) {
+		switch ( $this->get_mode() ) {
 			case General::MODE_LIVE:
 				$site_key   = $this->get( 'site_key' );
 				$secret_key = $this->get( 'secret_key' );
@@ -197,12 +222,33 @@ class Settings implements SettingsInterface {
 	}
 
 	/**
+	 * Get mode.
+	 *
+	 * @return string
+	 */
+	public function get_mode(): string {
+
+		/**
+		 * Filters the current operating mode to get relevant key pair.
+		 *
+		 * @param string $mode Current operating mode.
+		 */
+		return (string) apply_filters( 'hcap_mode', $this->get( 'mode' ) );
+	}
+
+	/**
 	 * Get site key.
 	 *
 	 * @return string
 	 */
 	public function get_site_key(): string {
-		return $this->get_keys()['site_key'];
+
+		/**
+		 * Filters the current site key.
+		 *
+		 * @param string $mode Current site key.
+		 */
+		return (string) apply_filters( 'hcap_site_key', $this->get_keys()['site_key'] );
 	}
 
 	/**
@@ -211,7 +257,28 @@ class Settings implements SettingsInterface {
 	 * @return string
 	 */
 	public function get_secret_key(): string {
-		return $this->get_keys()['secret_key'];
+
+		/**
+		 * Filters the current secret key.
+		 *
+		 * @param string $mode Current secret key.
+		 */
+		return (string) apply_filters( 'hcap_secret_key', $this->get_keys()['secret_key'] );
+	}
+
+	/**
+	 * Get language.
+	 *
+	 * @return string
+	 */
+	public function get_language(): string {
+
+		/**
+		 * Filters hCaptcha language.
+		 *
+		 * @param string $language Language.
+		 */
+		return (string) apply_filters( 'hcap_language', $this->get( 'language' ) );
 	}
 
 	/**

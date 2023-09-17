@@ -33,28 +33,16 @@ jobs:
         with:
           path: ${{ env.wp-plugin-directory }}
 
-      - name: Install PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
           extensions: json, mysqli, mbstring, zip
-        env:
-          COMPOSER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get Composer cache directory
-        working-directory: ${{ env.wp-plugin-directory }}
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
-      - name: Set up Composer caching
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-composer-dependencies
+      - name: Setup Composer caching
+        uses: ramsey/composer-install@v2
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
+          working-directory: ${{ env.wp-plugin-directory }}
 
       - name: Install dependencies
         working-directory: ${{ env.wp-plugin-directory }}
@@ -111,7 +99,7 @@ jobs:
 
       - name: Install plugins
         working-directory: ${{ env.wp-directory }}
-        run: wp plugin install bbpress buddypress contact-form-7 ultimate-member wpforms-lite wpforo
+        run: wp plugin install bbpress buddypress ultimate-member wpforms-lite wpforo
 
       - name: Install plugins requiring 7.1
         if: ${{ matrix.php-version >= '7.1' }}
@@ -122,6 +110,11 @@ jobs:
         if: ${{ matrix.php-version >= '7.3' }}
         working-directory: ${{ env.wp-directory }}
         run: wp plugin install woocommerce
+
+      - name: Install plugins requiring 7.4
+        if: ${{ matrix.php-version >= '7.4' }}
+        working-directory: ${{ env.wp-directory }}
+        run: wp plugin install contact-form-7
 
       - name: Run WP tests
         working-directory: ${{ env.wp-plugin-directory }}

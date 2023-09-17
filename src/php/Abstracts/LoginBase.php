@@ -12,6 +12,7 @@
 
 namespace HCaptcha\Abstracts;
 
+use HCaptcha\Helpers\HCaptcha;
 use WP_Error;
 use WP_User;
 
@@ -19,6 +20,16 @@ use WP_User;
  * Class LoginBase
  */
 abstract class LoginBase {
+
+	/**
+	 * Nonce action.
+	 */
+	const ACTION = 'hcaptcha_login';
+
+	/**
+	 * Nonce name.
+	 */
+	const NONCE = 'hcaptcha_login_nonce';
 
 	/**
 	 * Login attempts data option name.
@@ -93,6 +104,28 @@ abstract class LoginBase {
 	}
 
 	/**
+	 * Add captcha.
+	 *
+	 * @return void
+	 */
+	public function add_captcha() {
+		if ( ! $this->is_login_limit_exceeded() ) {
+			return;
+		}
+
+		$args = [
+			'action' => static::ACTION,
+			'name'   => static::NONCE,
+			'id'     => [
+				'source'  => HCaptcha::get_class_source( static::class ),
+				'form_id' => 'login',
+			],
+		];
+
+		HCaptcha::form_display( $args );
+	}
+
+	/**
 	 * Check whether the login limit is exceeded.
 	 *
 	 * @return bool
@@ -111,5 +144,22 @@ abstract class LoginBase {
 		);
 
 		return $count >= $login_limit;
+	}
+
+	/**
+	 * Protect form filter.
+	 *
+	 * @param bool|mixed $value   The protection status of a form.
+	 * @param string[]   $source  The source of the form (plugin, theme, WordPress Core).
+	 * @param int|string $form_id Form id.
+	 *
+	 * @return bool
+	 */
+	public function protect_form( $value, $source, $form_id ): bool {
+		if ( 'login' === $form_id && HCaptcha::get_class_source( static::class ) === $source ) {
+			return false;
+		}
+
+		return (bool) $value;
 	}
 }

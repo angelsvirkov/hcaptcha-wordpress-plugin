@@ -4,10 +4,9 @@
 assets/css/*.min.css
 assets/css/*.min.css.map
 assets/js/apps/
-assets/js/*.min.js
-assets/js/*.min.js.map
-assets/*.svg
-/coverage/
+assets/js/**/*.min.js
+assets/js/**/*.min.js.map
+coverage/
 node_modules/
 vendor/
 

@@ -8,22 +8,12 @@
 namespace HCaptcha\WC;
 
 use HCaptcha\Abstracts\LoginBase;
-use HCaptcha\Helpers\HCaptcha;
 use WP_Error;
 
 /**
  * Class Login
  */
 class Login extends LoginBase {
-	/**
-	 * Nonce action.
-	 */
-	const ACTION = 'hcaptcha_login';
-
-	/**
-	 * Nonce name.
-	 */
-	const NONCE = 'hcaptcha_login_nonce';
 
 	/**
 	 * Init hooks.
@@ -36,27 +26,6 @@ class Login extends LoginBase {
 	}
 
 	/**
-	 * Add captcha.
-	 *
-	 * @return void
-	 */
-	public function add_captcha() {
-		if ( $this->is_login_limit_exceeded() ) {
-			$args = [
-				'action' => self::ACTION,
-				'name'   => self::NONCE,
-				'id'     => [
-					'source'  => HCaptcha::get_class_source( __CLASS__ ),
-					'form_id' => 'login',
-				],
-
-			];
-
-			HCaptcha::form_display( $args );
-		}
-	}
-
-	/**
 	 * Verify login form.
 	 *
 	 * @param WP_Error|mixed $validation_error Validation error.
@@ -64,6 +33,10 @@ class Login extends LoginBase {
 	 * @return WP_Error|mixed
 	 */
 	public function verify( $validation_error ) {
+		if ( ! doing_filter( 'woocommerce_process_login_errors' ) ) {
+			return $validation_error;
+		}
+
 		if ( ! $this->is_login_limit_exceeded() ) {
 			return $validation_error;
 		}

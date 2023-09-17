@@ -3,7 +3,9 @@
 /**
  * @param HCaptchaNotificationsObject.ajaxUrl
  * @param HCaptchaNotificationsObject.dismissNotificationAction
- * @param HCaptchaNotificationsObject.nonce
+ * @param HCaptchaNotificationsObject.dismissNotificationNonce
+ * @param HCaptchaNotificationsObject.resetNotificationAction
+ * @param HCaptchaNotificationsObject.resetNotificationNonce
  */
 
 /**
@@ -12,8 +14,8 @@
  * @param {Object} $ jQuery instance.
  */
 const notifications = ( $ ) => {
-	const sectionTitleSelector = 'h3#hcaptcha-section-notifications';
 	const optionsSelector = 'form#hcaptcha-options';
+	const sectionKeysSelector = 'h3.hcaptcha-section-keys';
 	const notificationsSelector = 'div#hcaptcha-notifications';
 	const notificationSelector = 'div.hcaptcha-notification';
 	const dismissSelector = notificationsSelector + ' button.notice-dismiss';
@@ -21,6 +23,7 @@ const notifications = ( $ ) => {
 	const navNextSelector = '#hcaptcha-navigation .next';
 	const navSelectors = navPrevSelector + ', ' + navNextSelector;
 	const buttonsSelector = '.hcaptcha-notification-buttons';
+	const resetBtnSelector = 'button#reset_notifications';
 	const footerSelector = '#hcaptcha-notifications-footer';
 	let $notifications;
 
@@ -79,7 +82,7 @@ const notifications = ( $ ) => {
 
 		const data = {
 			action: HCaptchaNotificationsObject.dismissNotificationAction,
-			nonce: HCaptchaNotificationsObject.nonce,
+			nonce: HCaptchaNotificationsObject.dismissNotificationNonce,
 			id: $notification.data( 'id' ),
 		};
 
@@ -90,7 +93,6 @@ const notifications = ( $ ) => {
 		setButtons();
 
 		if ( $( notificationSelector ).length === 0 ) {
-			$( sectionTitleSelector ).remove();
 			$( notificationsSelector ).remove();
 		}
 
@@ -103,7 +105,7 @@ const notifications = ( $ ) => {
 		return false;
 	} );
 
-	$( navSelectors ).on( 'click', function( event ) {
+	$( optionsSelector ).on( 'click', navSelectors, function( event ) {
 		let direction = 1;
 
 		if ( $( event.target ).hasClass( 'prev' ) ) {
@@ -120,6 +122,28 @@ const notifications = ( $ ) => {
 			setNavStatus();
 			setButtons();
 		}
+	} );
+
+	$( resetBtnSelector ).on( 'click', function() {
+		const data = {
+			action: HCaptchaNotificationsObject.resetNotificationAction,
+			nonce: HCaptchaNotificationsObject.resetNotificationNonce,
+		};
+
+		// noinspection JSVoidFunctionReturnValueUsed,JSCheckFunctionSignatures
+		$.post( {
+			url: HCaptchaNotificationsObject.ajaxUrl,
+			data,
+		} ).success( function( response ) {
+			if ( ! response.success ) {
+				return;
+			}
+
+			$( notificationsSelector ).remove();
+			$( response.data ).insertBefore( sectionKeysSelector );
+
+			setButtons();
+		} );
 	} );
 
 	setButtons();
