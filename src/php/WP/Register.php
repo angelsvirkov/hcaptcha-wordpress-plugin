@@ -99,21 +99,11 @@ class Register {
 			return $errors;
 		}
 
-		$error_message = hcaptcha_get_verify_message_html(
+		$error_message = hcaptcha_verify_post(
 			self::NONCE,
 			self::ACTION
 		);
 
-		if ( null === $error_message ) {
-			return $errors;
-		}
-
-		if ( ! is_wp_error( $errors ) ) {
-			$errors = new WP_Error();
-		}
-
-		$errors->add( 'invalid_captcha', $error_message );
-
-		return $errors;
+		return HCaptcha::add_error_message( $errors, $error_message );
 	}
 }

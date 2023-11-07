@@ -7,7 +7,7 @@
 
 namespace HCaptcha\Settings;
 
-use HCaptcha\Settings\Abstracts\SettingsBase;
+use KAGG\Settings\Abstracts\SettingsBase;
 
 /**
  * Class SystemInfo
@@ -72,7 +72,7 @@ class SystemInfo extends PluginSettingsBase {
 		wp_enqueue_style(
 			self::HANDLE,
 			constant( 'HCAPTCHA_URL' ) . "/assets/css/system-info$this->min_prefix.css",
-			[ SettingsBase::HANDLE ],
+			[ static::PREFIX . '-' . SettingsBase::HANDLE ],
 			constant( 'HCAPTCHA_VERSION' )
 		);
 	}
@@ -137,7 +137,7 @@ class SystemInfo extends PluginSettingsBase {
 		$data .= $this->data( 'Secret key', $this->is_empty( $settings->get_secret_key() ) );
 		$data .= $this->data( 'Theme', $settings->get( 'theme' ) );
 		$data .= $this->data( 'Size', $settings->get( 'size' ) );
-		$data .= $this->data( 'Language', $settings->get( 'language' ) );
+		$data .= $this->data( 'Language', $settings->get( 'language' ) ?: 'Auto-detect' );
 		$data .= $this->data( 'Mode', $settings->get_mode() );
 		$data .= $this->data( 'Custom Themes', $this->is_on( 'custom_themes' ) );
 		$data .= $this->data( 'Config Params', $this->is_empty( $settings->get( 'config_params' ) ) );
@@ -382,6 +382,7 @@ class SystemInfo extends PluginSettingsBase {
 
 		$plugins        = wp_get_active_network_plugins();
 		$active_plugins = get_site_option( 'active_sitewide_plugins', [] );
+		$plugin_data    = [];
 
 		foreach ( $plugins as $plugin_path ) {
 			$plugin_base = plugin_basename( $plugin_path );
@@ -390,10 +391,17 @@ class SystemInfo extends PluginSettingsBase {
 				continue;
 			}
 
-			$update = array_key_exists( $plugin_path, $updates ) ? ' (needs update - ' . $updates[ $plugin_path ]->update->new_version . ')' : '';
-			$plugin = get_plugin_data( $plugin_path );
+			$plugin                                 = get_plugin_data( $plugin_path );
+			$plugin_data[ $plugin_path ]['Name']    = $plugin['Name'];
+			$plugin_data[ $plugin_path ]['Version'] = $plugin['Version'];
+		}
 
-			$data .= $plugin['Name'] . ': ' . $plugin['Version'] . $update;
+		$key_length = $this->get_max_key_length( $plugins, 'Name' );
+
+		foreach ( $plugin_data as $plugin_path => $plugin_datum ) {
+			$update = array_key_exists( $plugin_path, $updates ) ? ' (needs update - ' . $updates[ $plugin_path ]->update->new_version . ')' : '';
+
+			$data .= $this->data( $plugin_datum['Name'], $plugin_datum['Version'] . $update, $key_length );
 		}
 
 		return $data;

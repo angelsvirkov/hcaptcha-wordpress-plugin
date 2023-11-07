@@ -2,9 +2,9 @@
 Contributors: hcaptcha, kaggdesign
 Tags: captcha, hcaptcha, recaptcha, spam, abuse
 Requires at least: 5.0
-Tested up to: 6.3
+Tested up to: 6.4
 Requires PHP: 7.0.0
-Stable tag: 3.3.1
+Stable tag: 3.4.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -205,7 +205,7 @@ $form_id: post_id of download item in the admin.
 
 Easy Digital Downloads
 $source: 'easy-digital-downloads/easy-digital-downloads.php'
-$form_id: checkout.
+$form_id: 'checkout', 'login', 'lost_password' or 'register'
 
 Elementor Pro
 $source: 'elementor-pro/elementor-pro.php'
@@ -222,6 +222,10 @@ $form_id: post_id
 Kadence Advanced Form
 $source: 'kadence-blocks/kadence-blocks.php'
 $form_id: form_id
+
+LearnDash
+$source: 'sfwd-lms/sfwd_lms.php'
+$form_id: 'login', 'lost_password' or 'register'
 
 MemberPress
 $source: 'memberpress/memberpress.php'
@@ -449,6 +453,10 @@ For more details, please see the hCaptcha privacy policy at:
 * Divi Email Optin Form
 * Divi Login Form
 * Download Manager Button
+* Easy Digital Downloads Checkout Form
+* Easy Digital Downloads Login Form
+* Easy Digital Downloads Lost Password Form
+* Easy Digital Downloads Register Form
 * Elementor Pro Form
 * Fluent Forms
 * Forminator
@@ -459,7 +467,11 @@ For more details, please see the hCaptcha privacy policy at:
 * Jetpack Forms
 * Kadence Form
 * Kadence Advanced Form
+* LearnDash Login Form
+* LearnDash Lost Password Form
+* LearnDash Register Form
 * Mailchimp for WP Form
+* MailPoet Form
 * MemberPress Login Form
 * MemberPress Register Form
 * Ninja Forms
@@ -472,6 +484,8 @@ For more details, please see the hCaptcha privacy policy at:
 * Profile Builder Register Form
 * Quform Forms
 * Sendinblue Form
+* Simple Download Monitor Form
+* Simple Basic Contact Form
 * Subscriber Form
 * Support Candy New Ticket Form
 * Theme My Login Login Form
@@ -491,7 +505,8 @@ For more details, please see the hCaptcha privacy policy at:
 * WooCommerce Wishlist
 * Wordfence Security Login Form
 * Wordfence Login Security Login Form
-* WPForms Lite
+* WP Job Openings Form
+* WPForms Form
 * wpDiscuz Comment Form
 * wpDiscuz Support Form
 * wpForo New Topic Form
@@ -517,7 +532,39 @@ Instructions for popular native integrations are below:
 
 == Changelog ==
 
-= 3.3.1 =
+= 3.4.0 =
+* Tested with WordPress 6.4.
+* Tested with WooCommerce 8.2.
+* Added MailPoet integration.
+* Added Simple Download Monitor integration.
+* Added WP Job Openings integration.
+* Added Simple Basic Contact Form integration.
+* Added Easy Digital Downloads Login Form integration.
+* Added Easy Digital Downloads Lost Password Form integration.
+* Added Easy Digital Downloads Register Form integration.
+* Added purging of old failed login data to keep the `hcaptcha_login_data` option size small.
+* Fixed compatibility with HPOS in WooCommerce.
+* Fixed fatal error caused by broken backward compatibility in the Ultimate Member 2.7.0.
+* Fixed SystemInfo on multisite.
+* Fixed missing dependency of WooCommerce checkout script.
+* Fixed fatal error occurring during login under some conditions.
+* Fixed the inability to send the Divi Contact Form when Divi Email Optin was active.
+
+= 3.3.3 =
+* Added compatibility with LearnDash.
+* Added requirement to check the site config after changes in credentials.
+* Added filter `hcap_login_limit_exceeded`, allowing to filter the login limit exceeded status.
+* Changed Brevo (formerly Sendinblue) logo.
+* Fixed activation of hCaptcha with empty keys.
+* Fixed autocomplete of the Site Key field by LastPass.
+* Fixed form detection for Auto-Verify.
+* Fixed Brevo form working in the post content only.
+* Fixed hCaptcha not loading correctly for Brevo form.
+* Fixed Passster form working in the post content only.
+* Fixed LearnDash form working in the post content only.
+* Fixed auto-verify form not working on the homepage.
+
+= 3.3.2 =
 * Improved Beaver Builder login sequence.
 * Improved Classified Listing login sequence.
 * Improved Divi login sequence.

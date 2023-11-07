@@ -14,7 +14,8 @@ namespace HCaptcha\Tests\Unit\Settings;
 
 use HCaptcha\Admin\Notifications;
 use HCaptcha\Main;
-use HCaptcha\Settings\Abstracts\SettingsBase;
+use HCaptcha\Settings\PluginSettingsBase;
+use KAGG\Settings\Abstracts\SettingsBase;
 use HCaptcha\Settings\General;
 use HCaptcha\Settings\Settings;
 use HCaptcha\Tests\Unit\HCaptchaTestCase;
@@ -254,12 +255,15 @@ class GeneralTest extends HCaptchaTestCase {
 	 * @throws ReflectionException ReflectionException.
 	 */
 	public function test_admin_enqueue_scripts() {
-		$plugin_url     = 'http://test.test/wp-content/plugins/hcaptcha-wordpress-plugin';
-		$plugin_version = '1.0.0';
-		$min_prefix     = '.min';
-		$ajax_url       = 'https://test.test/wp-admin/admin-ajax.php';
-		$nonce          = 'some_nonce';
-		$site_key       = 'some key';
+		$plugin_url          = 'http://test.test/wp-content/plugins/hcaptcha-wordpress-plugin';
+		$plugin_version      = '1.0.0';
+		$min_prefix          = '.min';
+		$ajax_url            = 'https://test.test/wp-admin/admin-ajax.php';
+		$nonce               = 'some_nonce';
+		$site_key            = 'some key';
+		$check_config_notice =
+			'Credentials changed.' . "\n" .
+			'Please complete hCaptcha and check the site config.';
 
 		$settings = Mockery::mock( Settings::class )->makePartial();
 		$settings->shouldReceive( 'get' )->with( 'site_key' )->andReturn( $site_key );
@@ -325,6 +329,7 @@ class GeneralTest extends HCaptchaTestCase {
 					'modeTestPublisherSiteKey'             => General::MODE_TEST_PUBLISHER_SITE_KEY,
 					'modeTestEnterpriseSafeEndUserSiteKey' => General::MODE_TEST_ENTERPRISE_SAFE_END_USER_SITE_KEY,
 					'modeTestEnterpriseBotDetectedSiteKey' => General::MODE_TEST_ENTERPRISE_BOT_DETECTED_SITE_KEY,
+					'checkConfigNotice'                    => $check_config_notice,
 				]
 			)
 			->once();
@@ -333,7 +338,7 @@ class GeneralTest extends HCaptchaTestCase {
 			->with(
 				General::HANDLE,
 				$plugin_url . "/assets/css/general$min_prefix.css",
-				[ SettingsBase::HANDLE ],
+				[ PluginSettingsBase::PREFIX . '-' . SettingsBase::HANDLE ],
 				$plugin_version
 			)
 			->once();
